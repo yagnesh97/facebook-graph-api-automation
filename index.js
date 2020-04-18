@@ -2,14 +2,6 @@ var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const s3 = new AWS.S3();
 
-const mysql = require('mysql');
-const config = {
-    host     : process.env.host,
-    user     : process.env.user,
-    password : process.env.password,
-    database : process.env.database
-};
-
 const fs = require('fs');
 const { promisify } = require('util');
 const request = require('request-promise');
@@ -102,61 +94,6 @@ async function ReadObject () {
     return response;
 }
 
-function GetQuestion () {
-    return new Promise(async (resolve, reject)=>{
-        const connection = await mysql.createConnection(config);
-        let query = promisify(connection.query).bind(connection);
-        let result = await query('call fb_graph_api_rt(?)', [new Date().toISOString().split('T')[0]]);
-        connection.end();
-        console.log('fb_graph_api_rt: ', result);
-        return resolve(result);
-    });
-}
-
-function GetRandomNumber (max) {
-    return Math.floor(Math.random() * Math.floor(max));
-}
-
-async function GenerateResponse (message) {
-    const apikey = process.env.pixabayAPIKey;
-    let pixabayURL = `https://pixabay.com/api/?key=${apikey}&q=${message.category_name}&image_type=photo&page=1&per_page=3&safesearch=true&orientation=horizontal&order=popular&editors_choice=true`;
-    let parameters = {
-        method: 'GET',
-        uri: pixabayURL,
-    };
-
-    let question = message.question_text.trim();
-    question = question.substring(0, question.length-1);
-
-    let textMessage = 'Hi folks❗️ 🤟\n'
-    + `🌞 Here is today\'s question from ${message.category_name} ✨\n\n`
-    + `🤔 Question: ${question} ❓\n\n`
-    + `Comment your answer below❗️ 😋👇\n`
-    + `.\n.\n.\n#AmazonAlexa #AmazonEcho #QuizOfTheDay #Trivia #Quiz`;
-
-    let response = {
-        textMessage
-    };
-
-    await request(parameters)
-    .then(result => {
-        let data = JSON.parse(result);
-        let defaultImageURL = 'https://pixabay.com/get/57e9d2454d50a914f1dc84609629317e1536dfe75a4c704c7d297cd49349c75e_640.jpg';
-        let hitsLength = data.hits.length;
-        let hit = data.hits[GetRandomNumber(hitsLength)];
-
-        let imageURL = hitsLength === 0 ? defaultImageURL : hit.webformatURL
-        let tags = hitsLength === 0 ? hit.tags : message.category_name;
-
-        Object.assign(response, {
-            imageURL,
-            tags,
-        });
-    });
-
-    return response;
-}
-
 exports.handler = async (event) => {
     let bucketExist = false;
     
@@ -238,16 +175,13 @@ exports.handler = async (event) => {
         }
     }
 
-    let messageData = await GetQuestion ();
-    let message = await GenerateResponse(messageData[0][0]);
-
     const postTextOptions = {
         method: 'POST',
         uri: `https://graph.facebook.com/${PageId}/photos`,
         qs: {
             access_token: objectData.access_token,
-            url: message.imageURL,
-            message: message.textMessage
+            url: 'https://pixabay.com/get/57e9d2454d50a914f1dc84609629317e1536dfe75a4c704c7d297cd49349c75e_640.jpg',
+            message: 'This is my first feed!'
         }
     };
     await request(postTextOptions)
