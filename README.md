@@ -1,10 +1,10 @@
-# Facbook Graph API Automation
+# Facebook Graph API Automation
 
 This codebase will help you to setup a cron job and automating stuff like posting feed, photo or video on Facebook page.
 
 ## Getting Started
 
-Before you get started, you must have a Facebook page, Facebook Developer Account or any hosting service to host your serverless script. I'm using AWS Lambda to host my script and to schedule a cron job (invokes lambda function i.e. my script everyday). 
+Before you get started, you must have a Facebook page, Facebook Developer Account or any hosting service to host your serverless script. I'm using AWS Lambda to host my script and to schedule a cron job (invokes my script everyday). 
 
 Let's dive into coding part!
 
@@ -14,11 +14,11 @@ Let's dive into coding part!
 
 -To schedule a cron job
 
--Most importantly, to regenerate Long Lived tokens. A long-lived token generally lasts about 60 days. I'm automating this process too so, you don't need to update your code in twice a month.
+-Most importantly, to regenerate Long Lived tokens. A long-lived token generally lasts about 60 days. I'm automating this process too so, you don't need to update your code twice a month.
 
 ### Prerequisites
 
-Things you'll require to build this stuff. I would recommend you to watch this [tutorial](https://www.youtube.com/watch?v=WteK95AppF4&t=12s) to setup Facebook page, Facebook Developer's Account, Facebook App.
+Things you'll require to build this stuff. I would recommend you to watch this [tutorial](https://www.youtube.com/watch?v=WteK95AppF4&t=12s) to setup Facebook page, Facebook Developer's Account and Facebook App.
 
 ###### Non Technical
 ```
@@ -26,7 +26,7 @@ Facbook Page Id
 
 Facebook App in Facebook Developer's Account for App Id and App Secret
 
-Facebook Long Lived Token
+Facebook Long Lived Access Token
 
 AWS Account
 ```
@@ -63,7 +63,7 @@ npm install request-promise --save
 npm install fs --save
 ```
 
-Now that you have successfully installed the above modules, just create an **index.js** file and copy the code from this repository or clone this repository.
+Now that you have successfully installed the above modules, just create an **index.js** file and copy the code or clone repository.
 
 ## Create a JSON file
 
@@ -71,7 +71,7 @@ Here's the most important part comes in.
 
 Create a JSON file namely **fb-app.json**. This file will be used to automate the process of regenerating [Long-Lived Token](https://developers.facebook.com/docs/facebook-login/access-tokens/refreshing/) and to keep a track on its expire time.
 
-The below given api will request a new [Long-Lived Token](https://developers.facebook.com/docs/facebook-login/access-tokens/refreshing/) from your old Token.
+The below given api will request a new [Long-Lived Token](https://developers.facebook.com/docs/facebook-login/access-tokens/refreshing/) from your Access Token.
 
 **Request:**
 ```
@@ -89,12 +89,13 @@ https://graph.facebook.com/{graph-api-version}/oauth/access_token?
   "expires_in": 5183944            //The number of seconds until the token expires
 }
 ```
-Now in **fb-app.json** copy this reponse and replace **{long-lived-user-access-token}** with the your current Long-Lived Token.
+Now in **fb-app.json**, copy this reponse and replace **{long-lived-user-access-token}** with your current Long-Lived Token.
+
 Don't forget to remove comments.
 
 **If you don't know how to generate Long-Lived Token for the first time. [Click Me](https://developers.facebook.com/tools/debug/accesstoken/)!**
 
-Paste your existing token which you might have generated while testing and click on Debug. 
+Paste your existing token which you might have generated while testing and then click on Debug button. 
 
 Click **Extend Access Token**.
 
@@ -115,9 +116,9 @@ This is not it.
 
 -Click on you Role Name.
 
--Click on Attach Policy
+-Click on Attach Policy.
 
--Search and select **AmazonS3FullAccess** and click on Attach Policy.
+-Search and select **AmazonS3FullAccess** and click on Attach Policy button.
 
 Now, your Lambda function can have access to S3 bucket and its objects.
 
