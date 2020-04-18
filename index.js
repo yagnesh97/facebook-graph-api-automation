@@ -1,17 +1,50 @@
+/*
+MIT License
+
+Copyright (c) 2020 yagnesh97
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+//import all the required modules 
+
 var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const s3 = new AWS.S3();
 
 const fs = require('fs');
 const { promisify } = require('util');
+
 const request = require('request-promise');
 
-const BucketName = process.env.bucketName;
-const KeyName = process.env.keyName;
-const FbExchangeToken = process.env.fbToken;
-const PageId = process.env.pageId;
-const ClientId = process.env.clientId;
-const ClientSecret = process.env.clientSecret;
+
+//include environment variables
+
+const BucketName = process.env.bucketName;  //S3 bucket name
+const KeyName = process.env.keyName;    //JSON file name (fb-app.json)
+const FbExchangeToken = process.env.fbToken;    //intial long lived token
+const PageId = process.env.pageId;  //facebook page id
+const ClientId = process.env.clientId;  //facebook app id
+const ClientSecret = process.env.clientSecret;  //facbook app secret
+
+
+//method to regenerate facebook long lived token from existing token
 
 async function GenerateFBAccessToken (fbExchangeToken) {
     const parameters = {
@@ -41,6 +74,9 @@ async function GenerateFBAccessToken (fbExchangeToken) {
     console.log('response: ', response);
     return response;
 }
+
+
+//method to update fb-app.json in S3
 
 async function WriteObject (data) {
     let body = JSON.stringify(data);
@@ -77,6 +113,9 @@ async function WriteObject (data) {
     });
 }
 
+
+//method to read object i.e. fb-app.json from S3 
+
 async function ReadObject () {
     const response = {};
     const params = { Bucket: BucketName, Key: KeyName };
@@ -94,9 +133,13 @@ async function ReadObject () {
     return response;
 }
 
+
+//program execution begins from here
+
 exports.handler = async (event) => {
     let bucketExist = false;
     
+    //read or write S3 bucket
     await s3.listBuckets().promise()
     .then(async result1 => {
         let bucketList = result1.Buckets;
@@ -127,6 +170,7 @@ exports.handler = async (event) => {
     
     const objectData = {};
     
+    //read or write obeject inside S3 bucket
     if (bucketExist) {
         var bucketParams = {Bucket : BucketName};
         await s3.listObjects(bucketParams).promise()
@@ -157,6 +201,9 @@ exports.handler = async (event) => {
         });
     }
     
+    /* check if token has expired and generate a new token. if not, will use the same token.
+    update object (fb-app.json) */
+
     if (Object.keys(objectData).length > 0) {
         let expires = parseInt(objectData.expires_in, 10);
         console.log('expires: ', expires);
@@ -175,13 +222,14 @@ exports.handler = async (event) => {
         }
     }
 
+    //post feed, photos or video throught API. currently im posting photos
     const postTextOptions = {
         method: 'POST',
         uri: `https://graph.facebook.com/${PageId}/photos`,
         qs: {
             access_token: objectData.access_token,
-            url: 'https://pixabay.com/get/57e9d2454d50a914f1dc84609629317e1536dfe75a4c704c7d297cd49349c75e_640.jpg',
-            message: 'This is my first feed!'
+            url: 'https://pixabay.com/get/57e9d2454d50a914f1dc84609629317e1536dfe75a4c704c7d297cd49349c75e_640.jpg', //replace with an image url
+            message: 'This is my first feed!' //replace with your feed or message
         }
     };
     await request(postTextOptions)
