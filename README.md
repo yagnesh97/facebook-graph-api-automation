@@ -74,12 +74,13 @@ Create a JSON file namely **fb-app.json**. This file will be used to automate th
 The below given api will request a new [Long-Lived Token](https://developers.facebook.com/docs/facebook-login/access-tokens/refreshing/) from your Access Token.
 
 **Request:**
+Method: GET
 ```
 https://graph.facebook.com/{graph-api-version}/oauth/access_token?  
     grant_type=fb_exchange_token&          
     client_id={app-id}&
     client_secret={app-secret}&
-    fb_exchange_token={your-access-token}"
+    fb_exchange_token={your-access-token}
 ```
 **Response:**
 ```
